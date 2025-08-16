@@ -1,0 +1,100 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Essential Commands
+
+### Development
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+
+### Code Quality
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Run ESLint and fix issues
+- `npm run type-check` - Run TypeScript type checking
+
+### Testing
+- `npm test` - Run Jest tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:ci` - Run tests for CI/CD (no watch, with coverage)
+
+### Database Operations
+- `npm run db:setup` - Start local Supabase and seed database
+- `npm run db:reset` - Reset Supabase database
+- `npm run db:migrate` - Push database migrations
+- `npm run db:seed` - Seed database with test data
+
+## Architecture Overview
+
+This is a Next.js 15 application for a dynamic subscription cancellation flow with A/B testing capabilities. The architecture follows a component-based approach with centralized configuration management.
+
+### Key Architecture Components
+
+**Configuration System (`src/lib/config.ts`)**
+- Centralized configuration management through environment variables
+- Dynamic content system for cancellation reasons, offers, and UI text
+- Feature flags for A/B testing, analytics, and feedback collection
+- All pricing, colors, and content configurable without code changes
+
+**A/B Testing Framework (`src/lib/ab-testing.ts`, `src/lib/use-ab-testing.ts`)**
+- Deterministic variant assignment using cryptographically secure RNG
+- Persistent variant storage in Supabase database
+- Two variants: A (direct cancellation) and B (offer flow before cancellation)
+- Graceful fallback to mock data when database unavailable
+
+**Component Flow Architecture (`src/component/tsx/`)**
+- Sequential numbered components (01-MainEntry.tsx through 15-Cancelled.tsx)
+- State-driven navigation between cancellation flow steps
+- Each component has corresponding CSS module in `src/component/css/`
+- Main entry point controls entire flow state management
+
+**Analytics System (`src/lib/analytics.ts`)**
+- Multi-provider support (Google Analytics, Mixpanel, custom endpoints)
+- Comprehensive event tracking for user interactions
+- A/B test performance monitoring
+- Error tracking and user experience metrics
+
+**Responsive Design (`src/lib/responsive.ts`)**
+- Mobile-first responsive design with breakpoint-based layouts
+- Adaptive modals and form layouts across devices
+- Touch-friendly interactions for mobile optimization
+
+### Database Schema
+
+The application uses Supabase with the following key tables:
+- `cancellations` - Stores cancellation attempts, reasons, and A/B test assignments
+- Row-level security (RLS) policies for data protection
+- Automatic schema creation on first run
+
+### Environment Configuration
+
+Essential environment variables in `.env.local`:
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `NEXT_PUBLIC_ENABLE_AB_TESTING` - Enable/disable A/B testing
+- `NEXT_PUBLIC_AB_TEST_SPLIT` - A/B test split ratio (0.0-1.0)
+- Feature flags for analytics, feedback, and other capabilities
+
+### Development Workflow
+
+1. **Environment Setup**: Copy `env.example` to `.env.local` and configure
+2. **Database**: Run `npm run db:setup` for local development
+3. **Development**: Use `npm run dev` for hot reloading with Turbopack
+4. **Testing**: Run `npm run test:watch` during development
+5. **Code Quality**: Always run `npm run lint` and `npm run type-check` before commits
+
+### Component Numbering System
+
+Components follow a sequential flow:
+- 01-MainEntry.tsx - Main popup and flow orchestration
+- 02-JobFoundForm.tsx - Job finding questionnaire
+- 03-FeedbackForm.tsx - Feedback collection
+- 04-YesWithMM.tsx - Success with Migrate Mate
+- 10-Offer.tsx - Downsell offer presentation
+- 13-CancellationFlow.tsx - Reason selection
+- 14-reasons.tsx - Detailed reason form
+- 15-Cancelled.tsx - Final cancellation confirmation
+
+This numbering allows for easy insertion of new steps while maintaining logical flow order.

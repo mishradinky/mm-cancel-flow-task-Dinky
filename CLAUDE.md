@@ -25,6 +25,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run db:reset` - Reset Supabase database
 - `npm run db:migrate` - Push database migrations
 - `npm run db:seed` - Seed database with test data
+- `npm run supabase:setup` - Alternative setup command for local Supabase
+
+### Analysis and Optimization
+- `npm run analyze` - Build with bundle analysis enabled
+- `npm run clean` - Clean build artifacts and cache
 
 ## Architecture Overview
 
@@ -64,18 +69,26 @@ This is a Next.js 15 application for a dynamic subscription cancellation flow wi
 ### Database Schema
 
 The application uses Supabase with the following key tables:
+- `users` - User account information and authentication
+- `subscriptions` - User subscription details, pricing, and status
 - `cancellations` - Stores cancellation attempts, reasons, and A/B test assignments
 - Row-level security (RLS) policies for data protection
-- Automatic schema creation on first run
+- Automatic schema creation on first run via `seed.sql`
 
 ### Environment Configuration
 
 Essential environment variables in `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key for admin operations
 - `NEXT_PUBLIC_ENABLE_AB_TESTING` - Enable/disable A/B testing
 - `NEXT_PUBLIC_AB_TEST_SPLIT` - A/B test split ratio (0.0-1.0)
-- Feature flags for analytics, feedback, and other capabilities
+- `NEXT_PUBLIC_ENABLE_ANALYTICS` - Enable/disable analytics tracking
+- `NEXT_PUBLIC_ENABLE_FEEDBACK` - Enable/disable feedback collection
+- `NEXT_PUBLIC_DEFAULT_MONTHLY_PRICE` - Default subscription price in cents
+- `NEXT_PUBLIC_DOWSELL_DISCOUNT_AMOUNT` - Downsell discount amount in cents
+- UI colors: `NEXT_PUBLIC_PRIMARY_COLOR`, `NEXT_PUBLIC_SECONDARY_COLOR`, etc.
+- Analytics: `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID`, `NEXT_PUBLIC_MIXPANEL_TOKEN`
 
 ### Development Workflow
 
@@ -92,9 +105,33 @@ Components follow a sequential flow:
 - 02-JobFoundForm.tsx - Job finding questionnaire
 - 03-FeedbackForm.tsx - Feedback collection
 - 04-YesWithMM.tsx - Success with Migrate Mate
+- 05-YesMM.tsx - Yes path with Migrate Mate assistance
+- 06-NoWithoutMM.tsx - Success without Migrate Mate
+- 07-VisaNoMM.tsx - Visa assistance without Migrate Mate
+- 08-CancellationSuccess.tsx - Cancellation success page
+- 09-SuccessNoMM.tsx - Success page without Migrate Mate
 - 10-Offer.tsx - Downsell offer presentation
-- 13-CancellationFlow.tsx - Reason selection
-- 14-reasons.tsx - Detailed reason form
+- 11-FeedbackFormOffer.tsx - Feedback form after offer
+- 12-SubscriptionPopup.tsx - Subscription management popup
+- 13-CancellationFlow.tsx - Reason selection (deprecated)
+- 14-reasons.tsx - Detailed reason form and cancellation flow
 - 15-Cancelled.tsx - Final cancellation confirmation
 
 This numbering allows for easy insertion of new steps while maintaining logical flow order.
+
+### Testing Configuration
+
+The project uses Jest with the following setup:
+- Test environment: jsdom for DOM testing
+- Coverage thresholds: 70% for branches, functions, lines, and statements
+- Path aliases: `@/` maps to `src/`
+- Setup file: `jest.setup.js` for test utilities
+- Tests located in `__tests__` directories alongside source files
+
+### Key Libraries and Dependencies
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Database**: Supabase (PostgreSQL with real-time capabilities)
+- **Styling**: Tailwind CSS 4, CSS Modules
+- **Testing**: Jest, React Testing Library
+- **Development**: Turbopack for fast dev builds

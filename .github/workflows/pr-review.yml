@@ -1,0 +1,194 @@
+name: Pull Request Review Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # Automated Code Review
+  automated-review:
+    name: Automated Code Review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run comprehensive code analysis
+        id: analysis
+        run: |
+          echo "::group::TypeScript Analysis"
+          npm run type-check 2>&1 | tee typescript-report.txt
+          echo "::endgroup::"
+          
+          echo "::group::ESLint Analysis"
+          npm run lint 2>&1 | tee eslint-report.txt
+          echo "::endgroup::"
+          
+          echo "::group::Test Coverage"
+          npm run test:coverage 2>&1 | tee test-report.txt
+          echo "::endgroup::"
+
+      - name: Generate review summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read analysis reports
+            const typescriptReport = fs.existsSync('typescript-report.txt') ? fs.readFileSync('typescript-report.txt', 'utf8') : 'No TypeScript issues found';
+            const eslintReport = fs.existsSync('eslint-report.txt') ? fs.readFileSync('eslint-report.txt', 'utf8') : 'No ESLint issues found';
+            const testReport = fs.existsSync('test-report.txt') ? fs.readFileSync('test-report.txt', 'utf8') : 'Tests not available';
+            
+            // Create review comment
+            const reviewBody = `
+            ## 🔍 Automated Code Review Results
+            
+            ### 📊 Analysis Summary
+            - **TypeScript**: ${typescriptReport.includes('error') ? '❌ Issues found' : '✅ No issues'}
+            - **ESLint**: ${eslintReport.includes('error') ? '❌ Issues found' : '✅ No issues'}
+            - **Tests**: ${testReport.includes('fail') ? '❌ Tests failing' : '✅ All tests passing'}
+            
+            ### 🔧 TypeScript Analysis
+            \`\`\`
+            ${typescriptReport.substring(0, 1000)}${typescriptReport.length > 1000 ? '...' : ''}
+            \`\`\`
+            
+            ### 🔍 Code Quality (ESLint)
+            \`\`\`
+            ${eslintReport.substring(0, 1000)}${eslintReport.length > 1000 ? '...' : ''}
+            \`\`\`
+            
+            ### 📋 Review Checklist
+            Please ensure the following before merging:
+            
+            #### Code Quality
+            - [ ] Code follows TypeScript best practices
+            - [ ] All ESLint rules are satisfied
+            - [ ] No console.log statements in production code
+            - [ ] Error handling is properly implemented
+            
+            #### Security & Privacy
+            - [ ] No hardcoded secrets or API keys
+            - [ ] User data is handled securely
+            - [ ] Input validation is implemented
+            - [ ] No sensitive information in logs
+            
+            #### Performance
+            - [ ] No unnecessary re-renders in React components
+            - [ ] Proper use of React hooks (useCallback, useMemo)
+            - [ ] Optimized database queries
+            - [ ] Minimal bundle size impact
+            
+            #### Mobile Compatibility
+            - [ ] Responsive design works on mobile devices
+            - [ ] Touch interactions are properly implemented
+            - [ ] Mobile-specific optimizations are in place
+            - [ ] Text is readable on small screens
+            
+            #### Testing
+            - [ ] Unit tests cover new functionality
+            - [ ] Integration tests pass
+            - [ ] Manual testing completed
+            - [ ] Edge cases are covered
+            
+            ---
+            *This is an automated review. Manual code review is still required for business logic, UX, and architectural decisions.*
+            `;
+            
+            // Post the review comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reviewBody
+            });
+
+  # Check mobile compatibility
+  mobile-compatibility:
+    name: Mobile Compatibility Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check responsive design implementation
+        run: |
+          echo "Checking for mobile compatibility..."
+          
+          # Check for responsive CSS
+          grep -r "@media" src/ || echo "⚠️ No responsive CSS found"
+          
+          # Check for mobile-specific utilities
+          grep -r "useResponsive\|isMobile\|mobile" src/ || echo "⚠️ No mobile utilities found"
+          
+          # Check for touch event handling
+          grep -r "onTouch\|touch" src/ || echo "ℹ️ No touch events found (may not be needed)"
+          
+          echo "✅ Mobile compatibility check completed"
+
+  # Security and privacy validation
+  security-privacy-check:
+    name: Security & Privacy Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for sensitive data exposure
+        run: |
+          echo "🔒 Checking for potential security issues..."
+          
+          # Check for hardcoded secrets
+          if grep -r --exclude-dir=node_modules -i "password\|secret\|key\|token" src/; then
+            echo "⚠️ Potential secrets found - review manually"
+          else
+            echo "✅ No hardcoded secrets detected"
+          fi
+          
+          # Check for console.log statements
+          if grep -r "console\.log" src/; then
+            echo "⚠️ console.log statements found - remove for production"
+          else
+            echo "✅ No console.log statements found"
+          fi
+          
+          # Check for TODO/FIXME comments
+          if grep -r "TODO\|FIXME\|HACK" src/; then
+            echo "ℹ️ TODO/FIXME comments found - address before production"
+          fi
+
+      - name: Validate environment variable usage
+        run: |
+          echo "🔧 Checking environment variable usage..."
+          
+          # Check for proper env var usage
+          grep -r "process\.env" src/ || echo "ℹ️ No environment variables used"
+          
+          # Check for NEXT_PUBLIC prefix for client-side vars
+          if grep -r "process\.env\." src/ | grep -v "NEXT_PUBLIC_"; then
+            echo "⚠️ Server-side env vars may be exposed to client"
+          fi

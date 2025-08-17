@@ -24,10 +24,13 @@
     "supabase:setup": "supabase start && PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f seed.sql"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.5",
+    "@headlessui/react": "^2.2.7",
+    "@supabase/supabase-js": "^2.55.0",
+    "lucide-react": "^0.539.0",
     "next": "15.3.5",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^3.1.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -35,6 +38,7 @@
     "@testing-library/jest-dom": "^6.7.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

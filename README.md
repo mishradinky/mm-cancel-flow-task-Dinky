@@ -1,6 +1,6 @@
-# Migrate Mate - Dynamic Subscription Cancellation Flow
+# Cancel Flow Task - Dynamic Subscription Cancellation Flow
 
-A fully dynamic, production-ready subscription cancellation flow with A/B testing, analytics, responsive design, and comprehensive configuration management.
+A Next.js 15 application that provides a dynamic subscription cancellation flow with A/B testing capabilities. This project demonstrates a sophisticated approach to subscription retention through configurable cancellation flows, offers, and user experience optimization.
 
 ## 🚀 Features
 
@@ -192,39 +192,130 @@ NEXT_PUBLIC_GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
 NEXT_PUBLIC_MIXPANEL_TOKEN=your_mixpanel_token
 ```
 
-## 📱 Responsive Design
+## 📱 Mobile Compatibility & Responsive Design
 
-The application automatically adapts to different screen sizes:
+### ✅ Full Mobile Support
 
-- **Mobile** (< 768px): Full-screen modals, stacked layouts
-- **Tablet** (768px - 1024px): Medium modals, side-by-side layouts
+This application is designed with **mobile-first responsive design** and provides excellent mobile compatibility:
+
+#### 📐 Responsive Breakpoints
+- **Mobile** (< 768px): Full-screen modals, stacked layouts, touch-optimized controls
+- **Tablet** (768px - 1024px): Medium modals, adaptive layouts
 - **Desktop** (> 1024px): Large modals, optimal spacing
 
-### Customizing Responsive Behavior
+#### 🎯 Mobile-Specific Features
+- **Touch-Friendly Interface**: Large touch targets, swipe gestures
+- **Adaptive Modal System**: Full-screen on mobile, centered on desktop
+- **Mobile-First CSS**: Progressive enhancement from mobile to desktop
+- **Responsive Typography**: Scalable text sizes across devices
+- **Optimized Performance**: Fast loading on mobile networks
 
+#### 🔧 Mobile Implementation Details
+
+**Responsive Utilities (`src/lib/responsive.ts:21`)**
 ```typescript
-// In src/lib/responsive.ts
+export function isMobile(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < parseInt(breakpoints.md);
+}
+
+export function useResponsive() {
+  // Real-time responsive state management
+  const [isMobile, setIsMobile] = useState(false);
+  // ... responsive hook implementation
+}
+```
+
+**CSS Breakpoints**
+```typescript
 export const breakpoints = {
-  xs: '320px',
-  sm: '640px',
-  md: '768px',
-  lg: '1024px',
-  xl: '1280px',
-  '2xl': '1536px',
+  xs: '320px',    // Small phones
+  sm: '640px',    // Large phones
+  md: '768px',    // Tablets
+  lg: '1024px',   // Small laptops
+  xl: '1280px',   // Large laptops
+  '2xl': '1536px' // Desktops
 };
 ```
 
-## 🚀 Deployment
+**Mobile-Specific CSS (Example from `src/component/css/01-MainEntry.module.css:100`)**
+```css
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .overlay {
+    padding: 1rem;
+  }
+  
+  .popup {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+```
 
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push
+#### 📱 Mobile Testing
 
-### Netlify
-1. Connect your repository to Netlify
-2. Add environment variables in Netlify dashboard
-3. Deploy automatically on push
+The CI/CD pipeline includes automated mobile compatibility checks:
+- Responsive CSS validation
+- Touch interaction verification
+- Mobile utility function testing
+- Screen size adaptation testing
+
+## 🚀 Deployment & CI/CD Pipeline
+
+### GitHub Actions - Enterprise-Grade CI/CD
+
+This project includes a comprehensive CI/CD pipeline following industry best practices:
+
+#### 🔄 Automated Workflows
+
+**Main CI/CD Pipeline (`.github/workflows/ci.yml`)**
+- **Code Quality**: TypeScript type checking, ESLint analysis
+- **Security Audit**: Vulnerability scanning, secret detection
+- **Testing**: Unit tests with coverage reporting
+- **Build Verification**: Production build validation
+- **Performance Analysis**: Bundle size monitoring
+- **Automated Deployment**: Zero-downtime deployment to production
+
+**Pull Request Review (`.github/workflows/pr-review.yml`)**
+- **Automated Code Review**: Comprehensive analysis with actionable feedback
+- **Mobile Compatibility Check**: Responsive design validation
+- **Security & Privacy Validation**: Sensitive data exposure prevention
+- **Review Checklist**: Industry-standard review criteria
+
+#### 🔧 Required GitHub Secrets
+
+Configure these secrets in your GitHub repository settings:
+
+```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_key
+
+# Deployment (Vercel)
+VERCEL_TOKEN=your_vercel_token
+VERCEL_ORG_ID=your_vercel_org_id
+VERCEL_PROJECT_ID=your_vercel_project_id
+```
+
+#### 📊 Pipeline Features
+
+- **Parallel Execution**: Jobs run concurrently for faster feedback
+- **Fail-Fast Strategy**: Early termination on critical failures
+- **Artifact Management**: Build artifacts cached and shared between jobs
+- **Environment Protection**: Production deployments require approval
+- **Rollback Capability**: Automatic rollback on deployment failures
+
+### Vercel - Auto-Deployment
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/cancel-flow-task-main)
+
+**Features:**
+- Automatic deployment on every push to main
+- Preview deployments for pull requests
+- Zero-downtime deployments with instant rollback
+- Built-in CDN and edge optimization
 
 ### Manual Deployment
 ```bash

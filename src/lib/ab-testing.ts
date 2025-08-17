@@ -27,15 +27,12 @@ export async function getOrAssignVariant(userId: string): Promise<ABTestResult> 
 
     if (fetchError) {
       console.error('Error fetching existing variant:', fetchError);
-      // If it's a connection error, use mock data
-      if (fetchError.message?.includes('fetch') || fetchError.message?.includes('network')) {
-        console.warn('Database connection failed, using mock variant assignment');
-        return {
-          variant: generateSecureVariant(),
-          isNewAssignment: true
-        };
-      }
-      throw fetchError;
+      // If it's a connection error or any database error, use mock data
+      console.warn('Database connection failed, using mock variant assignment');
+      return {
+        variant: generateSecureVariant(),
+        isNewAssignment: true
+      };
     }
 
     // If user already has a variant, return it
@@ -62,14 +59,11 @@ export async function getOrAssignVariant(userId: string): Promise<ABTestResult> 
     if (insertError) {
       console.error('Error persisting variant:', insertError);
       // If it's a connection error, still return the variant but don't persist
-      if (insertError.message?.includes('fetch') || insertError.message?.includes('network')) {
-        console.warn('Database connection failed, returning variant without persistence');
-        return {
-          variant,
-          isNewAssignment: true
-        };
-      }
-      throw insertError;
+      console.warn('Database connection failed, returning variant without persistence');
+      return {
+        variant,
+        isNewAssignment: true
+      };
     }
 
     return {
@@ -91,7 +85,7 @@ export async function getOrAssignVariant(userId: string): Promise<ABTestResult> 
  * Generate cryptographically secure A/B variant
  * Uses window.crypto.getRandomValues() for secure randomness
  */
-function generateSecureVariant(): ABVariant {
+export function generateSecureVariant(): ABVariant {
   // Check if we're in a browser environment
   if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
     // Use cryptographically secure random number generator

@@ -55,11 +55,11 @@ This is a Next.js 15 application for a dynamic subscription cancellation flow wi
 - Each component has corresponding CSS module in `src/component/css/`
 - Main entry point controls entire flow state management
 
-**Analytics System (`src/lib/analytics.ts`)**
-- Multi-provider support (Google Analytics, Mixpanel, custom endpoints)
-- Comprehensive event tracking for user interactions
-- A/B test performance monitoring
-- Error tracking and user experience metrics
+**Analytics & Data Engineering System**
+- **Enhanced Analytics (`src/lib/enhanced-analytics.ts`)** - Singleton analytics service with comprehensive event tracking, user journey analysis, and external provider integration (Google Analytics, Mixpanel)
+- **Data Pipeline (`src/lib/data-pipeline.ts`)** - ETL pipeline for daily metrics calculation, cohort analysis, and automated insights generation
+- **Analytics Dashboard (`src/app/analytics/page.tsx`)** - Real-time visualization dashboard with KPIs, conversion funnels, A/B test results, and interactive charts
+- **Legacy Analytics (`src/lib/analytics.ts`)** - Original analytics implementation for backward compatibility
 
 **Responsive Design (`src/lib/responsive.ts`)**
 - Mobile-first responsive design with breakpoint-based layouts
@@ -70,8 +70,12 @@ This is a Next.js 15 application for a dynamic subscription cancellation flow wi
 
 The application uses Supabase with the following key tables:
 - `users` - User account information and authentication
-- `subscriptions` - User subscription details, pricing, and status
+- `subscriptions` - User subscription details, pricing, and status  
 - `cancellations` - Stores cancellation attempts, reasons, and A/B test assignments
+- `analytics_events` - Individual user events for the enhanced analytics system
+- `user_journeys` - Complete user journey data with step-by-step tracking
+- `daily_metrics` - Aggregated daily analytics for dashboard visualization
+- `user_cohorts` - Cohort retention data for churn analysis
 - Row-level security (RLS) policies for data protection
 - Automatic schema creation on first run via `seed.sql`
 
@@ -133,5 +137,67 @@ The project uses Jest with the following setup:
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Database**: Supabase (PostgreSQL with real-time capabilities)
 - **Styling**: Tailwind CSS 4, CSS Modules
-- **Testing**: Jest, React Testing Library
+- **Charts & Visualization**: Recharts for analytics dashboard
+- **Testing**: Jest, React Testing Library, @testing-library/jest-dom
 - **Development**: Turbopack for fast dev builds
+
+## Data Engineering & Analytics Architecture
+
+### Enhanced Analytics System (`src/lib/enhanced-analytics.ts`)
+- **Singleton Pattern**: Single instance managing all analytics across the application
+- **Event Tracking**: Comprehensive tracking of user interactions, page views, and custom events
+- **Journey Analytics**: Step-by-step user journey tracking with completion rates and abandonment analysis
+- **External Integrations**: Google Analytics 4 and Mixpanel with proper type safety
+- **Error Handling**: Graceful fallbacks when external services are unavailable
+- **Device Detection**: Automatic device and browser information collection
+
+### Data Pipeline (`src/lib/data-pipeline.ts`)
+- **ETL Process**: Daily Extract, Transform, Load operations for analytics aggregation
+- **Metrics Calculation**: Real-time and batch calculation of conversion rates, revenue metrics, and funnel analysis
+- **Cohort Analysis**: Automated cohort retention tracking and analysis
+- **Automated Insights**: AI-driven insights generation with statistical significance testing
+- **Data Cleanup**: Automatic cleanup of old analytics events to maintain performance
+- **Error Resilience**: Robust error handling with detailed logging for monitoring
+
+### Analytics Dashboard (`src/app/analytics/page.tsx`)
+- **Real-time KPIs**: Live metrics cards for sessions, conversions, and revenue
+- **Interactive Charts**: Line charts, pie charts, and funnel visualizations using Recharts
+- **Time Range Filtering**: Dynamic data filtering for 7, 30, and 90-day periods
+- **A/B Test Visualization**: Statistical comparison of variant performance
+- **Responsive Design**: Mobile-optimized dashboard with adaptive layouts
+- **Export Capabilities**: Ready for CSV/PDF export functionality
+
+### Database Integration Strategy
+- **Graceful Degradation**: Application continues functioning when database is unavailable
+- **Mock Data Fallbacks**: Intelligent fallbacks to demonstrate functionality
+- **Connection Pooling**: Optimized database connections for high-performance analytics
+- **Batch Operations**: Efficient bulk operations for analytics data processing
+
+### Analytics Routes & APIs
+- `/analytics` - Main analytics dashboard
+- `DataPipeline.runDailyETL()` - Manual ETL execution
+- `DataPipeline.getRealTimeMetrics()` - Current day metrics API
+- Analytics events are automatically tracked on all user interactions
+
+### Performance Considerations
+- **Async Processing**: Non-blocking analytics collection
+- **Client-side Caching**: Intelligent caching of analytics data
+- **Lazy Loading**: Analytics dashboard components loaded on demand
+- **Memory Management**: Efficient cleanup of analytics event listeners
+
+## Error Handling & Development Notes
+
+### Database Connection Issues
+- A/B testing gracefully falls back to cryptographically secure variant assignment when database is unavailable
+- Analytics system continues functioning with in-memory event tracking
+- All database operations include comprehensive error handling with appropriate fallbacks
+
+### Type Safety
+- All analytics interfaces use `Record<string, unknown>` instead of `any` for better type safety
+- External analytics providers (gtag, mixpanel) are properly typed with window object assertions
+- Jest DOM types are configured for testing utilities
+
+### Development Server
+- Uses Turbopack for fast hot reloading
+- Automatically handles port conflicts (will use 3001, 3002, 3003, etc.)
+- Analytics events are logged to console in development mode for debugging
